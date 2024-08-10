@@ -1,44 +1,37 @@
-"use client";
-
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function PaginationControls({
-  hasNextPage,
-  hasPrevPage,
+  currentPage,
   totalPages,
+  basePath,
 }: {
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
+  currentPage: number;
   totalPages: number;
+  basePath: string;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const page = Number(searchParams.get("page") ?? "1");
-  const per_page = searchParams.get("per_page") ?? "24";
-
-  const handlePageChange = (newPage: number) => {
-    router.push(`/blogs?page=${newPage}&per_page=${per_page}`);
-  };
+  const hasPrevPage = currentPage > 1;
+  const hasNextPage = currentPage < totalPages;
 
   return (
     <div className="flex items-center justify-center my-8">
       <div className="join">
-        <button
-          className="join-item btn"
-          disabled={!hasPrevPage}
-          onClick={() => handlePageChange(page - 1)}
+        <Link
+          href={hasPrevPage ? `${basePath}/${currentPage - 1}` : "#"}
+          passHref
         >
-          «
-        </button>
-        <button className="join-item btn">Page {page}</button>
-        <button
-          className="join-item btn"
-          disabled={!hasNextPage}
-          onClick={() => handlePageChange(page + 1)}
+          <button className="join-item btn" disabled={!hasPrevPage}>
+            «
+          </button>
+        </Link>
+        <button className="join-item btn">Page {currentPage}</button>
+        <Link
+          href={hasNextPage ? `${basePath}/${currentPage + 1}` : "#"}
+          passHref
         >
-          »
-        </button>
+          <button className="join-item btn" disabled={!hasNextPage}>
+            »
+          </button>
+        </Link>
       </div>
     </div>
   );
