@@ -4,6 +4,7 @@ export type Blog = {
   id: string;
   title: string;
   body: string;
+  day: string;
 };
 
 if (!process.env.SERVICE_DOMAIN) {
