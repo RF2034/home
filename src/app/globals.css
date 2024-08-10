@@ -2,32 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+/* daisyUIのテーマ変数を使用 */
+/* :root {
+  --foreground-rgb: 28, 28, 28;
+  --background-start-rgb: 245, 245, 245;
   --background-end-rgb: 255, 255, 255;
-}
+} */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
+/* ダークモードはdaisyUIのテーマ切り替えで対応 */
+/* @media (prefers-color-scheme: dark) { ... } は削除 */
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  @apply bg-base-200 text-base-content;
+  font-family: "Zen Maru Gothic", sans-serif;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* daisyUIのタイポグラフィクラスを使用 */
+.content {
+  @apply container mx-auto px-4 py-8 bg-base-100 rounded-lg shadow-lg;
+}
+
+.content h1 {
+  @apply text-4xl font-bold mb-4 mt-8;
+}
+
+.content h2 {
+  @apply text-3xl font-semibold mb-4 mt-6;
+}
+
+.content h3 {
+  @apply text-2xl font-semibold mb-4 mt-5;
+}
+
+.content h4 {
+  @apply text-xl font-semibold mb-3 mt-4;
+}
+
+.content p {
+  @apply text-lg leading-relaxed mb-4;
+}
+
+/* daisyUIのカラークラスを使用 */
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6,
+.content p {
+  @apply text-base-content;
+}
+
+/* daisyUIのユーティリティクラスを使用した追加スタイル */
+.btn {
+  @apply rounded-full;
+}
+
+.card {
+  @apply shadow-xl;
+}
+
+.navbar {
+  @apply bg-base-300;
+}
+
+/* カスタムクラス */
+.custom-link {
+  @apply link link-primary;
+}
+
+.custom-alert {
+  @apply alert alert-info;
 }
