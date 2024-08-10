@@ -1,149 +1,84 @@
+// 必要なモジュールとコンポーネントをインポート
 import Link from "next/link";
 import { getBlogs } from "@/../libs/client";
-import { Menu, X, ChevronDown } from "lucide-react";
+import {
+  formatDate,
+  trimBody,
+  sortBlogsByDate,
+  ExtendedBlog,
+} from "@/lib/utils";
+import PaginationControls from "@/components/PaginationControls";
 
-const Header = () => (
-  <header className="bg-base-200 shadow-lg">
-    <div className="container mx-auto flex justify-between items-center py-4">
-      <Link href="/" className="text-2xl font-bold text-primary">
-        cgr
-      </Link>
-      <nav>
-        <ul className="flex space-x-4">
-          <li>
-            <Link href="/" className="hover:text-primary transition-colors">
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/about"
-              className="hover:text-primary transition-colors"
-            >
-              About
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/portfoilio"
-              className="hover:text-primary transition-colors"
-            >
-              Portfolio
-            </Link>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-);
+// 1ページあたりの記事数を定義
+const ITEMS_PER_PAGE = 24;
 
-const Footer = () => (
-  <footer className="bg-base-200 text-base-content">
-    <div className="container mx-auto py-8">
-      <div className="flex flex-wrap justify-between">
-        <div className="w-full md:w-1/3 mb-6 md:mb-0">
-          <h3 className="text-lg font-semibold mb-2">About FutureBlog</h3>
-          <p>Exploring the frontiers of technology and imagination.</p>
-        </div>
-        <div className="w-full md:w-1/3 mb-6 md:mb-0">
-          <h3 className="text-lg font-semibold mb-2">Quick Links</h3>
-          <ul>
-            <li>
-              <Link
-                href="/privacy"
-                className="hover:text-primary transition-colors"
-              >
-                Privacy Policy
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/terms"
-                className="hover:text-primary transition-colors"
-              >
-                Terms of Service
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div className="w-full md:w-1/3">
-          <h3 className="text-lg font-semibold mb-2">Connect</h3>
-          <div className="flex space-x-4">
-            <a
-              href="#"
-              className="text-xl hover:text-primary transition-colors"
-            >
-              Twitter
-            </a>
-            <a
-              href="#"
-              className="text-xl hover:text-primary transition-colors"
-            >
-              GitHub
-            </a>
-            <a
-              href="#"
-              className="text-xl hover:text-primary transition-colors"
-            >
-              LinkedIn
-            </a>
-          </div>
-        </div>
-      </div>
-      <div className="mt-8 text-center">
-        <p>&copy; 2024 FutureBlog. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-);
+// 静的生成のためのパラメータを生成する関数
+export async function generateStaticParams() {
+  const { contents } = await getBlogs(); // すべてのブログ記事を取得
+  const totalPages = Math.ceil(contents.length / ITEMS_PER_PAGE); // 総ページ数を計算
+  // 各ページに対応するパラメータオブジェクトの配列を返す
+  return Array.from({ length: totalPages }, (_, i) => ({
+    page: (i + 1).toString(),
+  }));
+}
 
-export default async function HomePage() {
-  const { contents } = await getBlogs();
+// メインのホームページコンポーネント
+export default async function HomePage({
+  params,
+}: {
+  params: { page: string };
+}) {
+  const page = Number(params.page) || 1; // 現在のページ番号（デフォルトは1）
+  const { contents } = await getBlogs(); // すべてのブログ記事を取得
 
-  if (!contents) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow container mx-auto px-4">
-          <h1 className="text-3xl font-bold text-center mt-20">
-            No Contents Available
-          </h1>
-        </main>
-        <Footer />
-      </div>
-    );
+  // ブログ記事がない場合のフォールバック表示
+  if (!contents || contents.length === 0) {
+    return <h1 className="text-3xl font-bold text-center mt-20">虚無がある</h1>;
   }
 
+  // ブログ記事を日付順にソート
+  const sortedContents = sortBlogsByDate(contents as ExtendedBlog[]);
+  const totalItems = sortedContents.length; // 総記事数
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE); // 総ページ数
+  // 現在のページに表示する記事を抽出
+  const paginatedContents = sortedContents.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-12">
-          Welcome to FutureBlog
-        </h1>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {contents.map((blog) => (
-            <div
-              key={blog.id}
-              className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="card-body">
-                <h2 className="card-title text-2xl mb-4">{blog.title}</h2>
-                <p className="mb-4 text-base-content/70">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                </p>
-                <div className="card-actions justify-end">
-                  <Link href={`/blogs/${blog.id}`}>
-                    <button className="btn btn-primary">Read More</button>
-                  </Link>
-                </div>
+    <>
+      {/* ブログ記事のグリッド表示 */}
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedContents.map((blog) => (
+          <div
+            key={blog.id}
+            className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300"
+          >
+            <div className="card-body">
+              <h2 className="card-title text-2xl mb-4">{blog.title}</h2>
+              <p className="mb-4 text-base-content/70">
+                {formatDate(blog.day)} {/* 日付をフォーマット */}
+              </p>
+              <p className="mb-4 text-base-content/70">{trimBody(blog.body)}</p>{" "}
+              {/* 本文を短縮 */}
+              <div className="card-actions justify-end">
+                <Link href={`/blogs/${blog.id}`}>
+                  <button className="btn btn-outline btn-secondary">
+                    続きを読む
+                  </button>
+                </Link>
               </div>
             </div>
-          ))}
-        </div>
-      </main>
-      <Footer />
-    </div>
+          </div>
+        ))}
+      </div>
+      {/* ページネーションコントロール */}
+      <PaginationControls
+        hasNextPage={page < totalPages}
+        hasPrevPage={page > 1}
+        totalPages={totalPages}
+      />
+    </>
   );
 }
