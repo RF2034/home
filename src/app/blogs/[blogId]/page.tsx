@@ -1,7 +1,21 @@
 import { notFound } from "next/navigation";
 import { getDetail, getBlogs } from "@/../libs/client";
 import { formatDate } from "@/lib/utils";
-import { optimizeImages } from "@/lib/OptimizedImage";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+
+// daisyUIのスピナーを使用したローディングコンポーネント
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center h-64">
+    <span className="loading loading-spinner loading-lg"></span>
+  </div>
+);
+
+// 動的インポートを使用してBlogContentコンポーネントを遅延ロード
+const BlogContent = dynamic(() => import("@/components/BlogContent"), {
+  loading: () => <LoadingSpinner />,
+  ssr: false, // サーバーサイドレンダリングを無効化
+});
 
 export async function generateStaticParams() {
   const { contents } = await getBlogs();
@@ -37,18 +51,13 @@ export default async function StaticDetailPage({
     notFound();
   }
 
-  const optimizedBody = optimizeImages(blog.body);
-
   return (
     <article className="prose lg:prose-xl mx-auto max-w-4xl px-4">
       <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
       <p className="text-base-content/70 mb-4">{formatDate(blog.day)}</p>
-      <div
-        className="w-full [&_img]:my-4 [&_img]:max-w-full [&_img]:object-contain"
-        dangerouslySetInnerHTML={{
-          __html: optimizedBody,
-        }}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <BlogContent content={blog.body} />
+      </Suspense>
     </article>
   );
 }
