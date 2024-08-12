@@ -51,17 +51,3 @@ export function calculateRelativeSize(
   // Tailwind の任意の値を使用
   return `w-[${percentage.toFixed(2)}%]`;
 }
-
-// 使用例
-export function ExampleUsage() {
-  const htmlContent = `
-    <div>
-      <img src="example1.jpg" width="800" height="600" alt="Example 1">
-      <img src="example2.jpg" width="400" height="800" alt="Example 2">
-    </div>
-  `;
-
-  const optimizedContent = optimizeImages(htmlContent);
-
-  return <div dangerouslySetInnerHTML={{ __html: optimizedContent }} />;
-}
