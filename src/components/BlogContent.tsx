@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, createElement } from "react";
 import Script from "next/script";
 import parse, {
   domToReact,
@@ -36,17 +36,15 @@ const optimizeImages = (htmlContent: string): string => {
         "object-center",
       ].join(" ");
 
-      const optimizedImageTag = `
-        <img
-          src="${src}?auto=format,compress&fit=max"
-          alt="${alt}"
-          class="${tailwindClasses}"
-          ${width ? `width="${width}"` : ""}
-          ${height ? `height="${height}"` : ""}
-          loading="lazy"
-        />`;
+      const newImg = document.createElement("img");
+      newImg.src = `${src}?auto=format,compress&fit=max`;
+      newImg.alt = alt;
+      newImg.className = tailwindClasses;
+      if (width) newImg.width = parseInt(width);
+      if (height) newImg.height = parseInt(height);
+      newImg.loading = "lazy";
 
-      img.outerHTML = optimizedImageTag;
+      img.parentNode?.replaceChild(newImg, img);
     }
   });
 
