@@ -10,7 +10,7 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ["images.microcms-assets.io"], // microCMSの画像ドメインを追加
+    domains: ["images.microcms-assets.io"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
@@ -28,6 +28,11 @@ const nextConfig = {
               img-src 'self' https://images.microcms-assets.io https://pbs.twimg.com data:;
               frame-src https://open.spotify.com https://www.youtube.com https://embed.nicovideo.jp https://platform.twitter.com;
               connect-src 'self' https://vitals.vercel-insights.com;
+              object-src 'none';
+              base-uri 'self';
+              form-action 'self';
+              font-src 'self';
+              manifest-src 'self';
             `
               .replace(/\s{2,}/g, " ")
               .trim(),

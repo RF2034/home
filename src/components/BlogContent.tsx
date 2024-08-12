@@ -1,5 +1,6 @@
-import { FC } from "react";
-import Script from "next/script";
+"use client";
+
+import { FC, useEffect } from "react";
 import parse, {
   domToReact,
   Element,
@@ -7,52 +8,43 @@ import parse, {
   HTMLReactParserOptions,
 } from "html-react-parser";
 import Image from "next/image";
-import { JSDOM } from "jsdom";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
+import { isValidElement, ReactNode } from "react";
 
 interface BlogContentProps {
   content: string;
 }
 
 const sanitizeAndOptimizeContent = (htmlContent: string): string => {
-  const window = new JSDOM("").window as unknown as Window;
-  const purify = DOMPurify(window);
-
-  // カスタムのDOMPurify設定
-  const clean = purify.sanitize(htmlContent, {
+  return DOMPurify.sanitize(htmlContent, {
     ADD_TAGS: ["iframe"],
     ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling"],
-    FORBID_ATTR: ["style"], // style属性を禁止
-    FORBID_TAGS: ["script"], // scriptタグを禁止
+    FORBID_ATTR: ["style"],
+    FORBID_TAGS: ["script"],
   });
-
-  const dom = new JSDOM(clean);
-  const document = dom.window.document;
-
-  // iframeの処理
-  const iframes = document.getElementsByTagName("iframe");
-  Array.from(iframes).forEach((iframe) => {
-    iframe.removeAttribute("style");
-    iframe.setAttribute("class", "w-full h-full absolute top-0 left-0");
-    const wrapper = document.createElement("div");
-    wrapper.setAttribute("class", "relative w-full pt-[56.25%]"); // 16:9のアスペクト比
-    iframe.parentNode?.insertBefore(wrapper, iframe);
-    wrapper.appendChild(iframe);
-  });
-
-  // 画像の処理
-  const images = document.getElementsByTagName("img");
-  Array.from(images).forEach((img) => {
-    img.removeAttribute("style");
-    img.setAttribute("class", "max-w-full h-auto rounded-lg shadow-lg");
-    img.setAttribute("loading", "lazy");
-  });
-
-  return document.body.innerHTML;
 };
 
 const BlogContent: FC<BlogContentProps> = ({ content }) => {
   const sanitizedContent = sanitizeAndOptimizeContent(content);
+
+  useEffect(() => {
+    // Twitter widgets
+    const twitterScript = document.createElement("script");
+    twitterScript.src = "https://platform.twitter.com/widgets.js";
+    twitterScript.async = true;
+    document.body.appendChild(twitterScript);
+
+    // iframely
+    const iframelyScript = document.createElement("script");
+    iframelyScript.src = "https://cdn.iframe.ly/embed.js";
+    iframelyScript.async = true;
+    document.body.appendChild(iframelyScript);
+
+    return () => {
+      document.body.removeChild(twitterScript);
+      document.body.removeChild(iframelyScript);
+    };
+  }, []);
 
   const options: HTMLReactParserOptions = {
     replace: (domNode) => {
@@ -87,16 +79,17 @@ const BlogContent: FC<BlogContentProps> = ({ content }) => {
 
   const parsedContent = parse(sanitizedContent, options);
 
-  return (
-    <>
-      <div className="blog-content">{parsedContent}</div>
-      <Script
-        src="https://platform.twitter.com/widgets.js"
-        strategy="lazyOnload"
-      />
-      <Script src="https://cdn.iframe.ly/embed.js" strategy="lazyOnload" />
-    </>
-  );
+  const renderContent = (): ReactNode => {
+    if (isValidElement(parsedContent)) {
+      return parsedContent;
+    } else if (Array.isArray(parsedContent)) {
+      return domToReact(parsedContent as unknown as Element[]);
+    } else {
+      return parsedContent as ReactNode;
+    }
+  };
+
+  return <div className="blog-content">{renderContent()}</div>;
 };
 
 export default BlogContent;

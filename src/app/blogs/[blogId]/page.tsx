@@ -4,14 +4,12 @@ import { formatDate } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
-// daisyUIのスピナーを使用したローディングコンポーネント
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-64">
     <span className="loading loading-spinner loading-lg"></span>
   </div>
 );
 
-// 動的インポートを使用してBlogContentコンポーネントを遅延ロード
 const BlogContent = dynamic(() => import("@/components/BlogContent"), {
   loading: () => <LoadingSpinner />,
 });
@@ -36,7 +34,7 @@ export async function generateMetadata({
   }
   return {
     title: blog.title,
-    description: blog.body.substring(0, 160),
+    description: blog.body.substring(0, 160).replace(/<[^>]*>/g, ""),
   };
 }
 
