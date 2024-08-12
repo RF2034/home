@@ -19,7 +19,7 @@ export default function PaginationControls({
           href={hasPrevPage ? `${basePath}/${currentPage - 1}` : "#"}
           passHref
         >
-          <button className="join-item btn" disabled={!hasPrevPage}>
+          <button className="join-item btn secondary" disabled={!hasPrevPage}>
             «
           </button>
         </Link>
@@ -28,7 +28,7 @@ export default function PaginationControls({
           href={hasNextPage ? `${basePath}/${currentPage + 1}` : "#"}
           passHref
         >
-          <button className="join-item btn" disabled={!hasNextPage}>
+          <button className="join-item btn secondary" disabled={!hasNextPage}>
             »
           </button>
         </Link>

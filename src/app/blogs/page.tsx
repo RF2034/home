@@ -8,7 +8,7 @@ import {
 } from "@/lib/utils";
 import PaginationControls from "@/components/PaginationControls";
 
-const ITEMS_PER_PAGE = 24;
+const ITEMS_PER_PAGE = 12;
 
 export async function generateStaticParams() {
   const { contents } = await getBlogs();
