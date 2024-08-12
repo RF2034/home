@@ -13,7 +13,7 @@ const zenMaruGothic = Zen_Maru_Gothic({
 });
 
 export const metadata: Metadata = {
-  title: "FUNBARE*ねっと",
+  title: "FUNBARE.net",
   description: "cigareのブログです",
   icons: {
     icon: [
