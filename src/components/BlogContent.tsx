@@ -1,9 +1,10 @@
-import { FC, createElement } from "react";
+import { FC } from "react";
 import Script from "next/script";
 import parse, {
   domToReact,
   Element,
   attributesToProps,
+  HTMLReactParserOptions,
 } from "html-react-parser";
 import Image from "next/image";
 import { JSDOM } from "jsdom";
@@ -36,15 +37,15 @@ const optimizeImages = (htmlContent: string): string => {
         "object-center",
       ].join(" ");
 
-      const newImg = document.createElement("img");
-      newImg.src = `${src}?auto=format,compress&fit=max`;
-      newImg.alt = alt;
-      newImg.className = tailwindClasses;
-      if (width) newImg.width = parseInt(width);
-      if (height) newImg.height = parseInt(height);
-      newImg.loading = "lazy";
+      img.className = tailwindClasses;
+      img.src = `${src}?auto=format,compress&fit=max`;
+      img.alt = alt;
+      if (width) img.width = parseInt(width);
+      if (height) img.height = parseInt(height);
+      img.setAttribute("loading", "lazy");
 
-      img.parentNode?.replaceChild(newImg, img);
+      // Remove any inline styles
+      img.removeAttribute("style");
     }
   });
 
@@ -54,14 +55,14 @@ const optimizeImages = (htmlContent: string): string => {
 const BlogContent: FC<BlogContentProps> = ({ content }) => {
   const optimizedContent = optimizeImages(content);
 
-  const parsedContent = parse(optimizedContent, {
+  const options: HTMLReactParserOptions = {
     replace: (domNode) => {
       if (domNode instanceof Element) {
         if (domNode.name === "iframe") {
           const { src, ...props } = domNode.attribs;
           return (
             <>
-              <iframe {...props} />
+              <iframe {...props} src={src} />
               <Script src={src} />
             </>
           );
@@ -78,9 +79,15 @@ const BlogContent: FC<BlogContentProps> = ({ content }) => {
             />
           );
         }
+        // Remove any inline styles from all elements
+        if (domNode.attribs && domNode.attribs.style) {
+          delete domNode.attribs.style;
+        }
       }
     },
-  });
+  };
+
+  const parsedContent = parse(optimizedContent, options);
 
   return <div>{parsedContent}</div>;
 };
