@@ -74,4 +74,4 @@ export default async function HomePage({
 
 export const dynamic = "error";
 export const dynamicParams = false;
-export const revalidate = false;
+export const revalidate = 86400; // 1時間ごとにrevalidate

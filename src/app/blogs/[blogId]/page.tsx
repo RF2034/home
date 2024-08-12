@@ -61,3 +61,4 @@ export default async function StaticDetailPage({
     </article>
   );
 }
+export const revalidate = 86400; // 1時間ごとにrevalidate

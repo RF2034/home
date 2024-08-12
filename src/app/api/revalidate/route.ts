@@ -1,29 +1,25 @@
-// src/app/api/revalidate/route.ts
-import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("x-revalidate-secret");
-  const blogId = request.headers.get("x-blog-id");
+  console.log("WebHook received:", new Date().toISOString());
+
+  const secret = request.nextUrl.searchParams.get("secret");
+  console.log("Received secret:", secret);
 
   if (secret !== process.env.REVALIDATE_SECRET) {
+    console.log("Invalid secret");
     return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
   }
 
-  if (!blogId) {
-    return NextResponse.json(
-      { message: "BlogId is required" },
-      { status: 400 }
-    );
-  }
-
   try {
-    // ブログ一覧ページを再検証
+    console.log("Revalidating paths");
     revalidatePath("/blogs");
-    // 特定の記事ページを再検証
-    revalidatePath(`/blogs/${blogId}`);
+    revalidatePath("/blogs/[blogId]");
+    console.log("Revalidation complete");
     return NextResponse.json({ revalidated: true, now: Date.now() });
   } catch (err) {
+    console.error("Revalidation error:", err);
     return NextResponse.json(
       { message: "Error revalidating" },
       { status: 500 }
