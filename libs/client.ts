@@ -1,4 +1,5 @@
 import { createClient } from "microcms-js-sdk";
+import { cache } from "react";
 
 export type Blog = {
   id: string;
@@ -29,10 +30,10 @@ export const getBlogs = async () => {
 };
 
 // ブログの詳細を取得
-export const getDetail = async (contentId: string) => {
+export const getDetail = cache(async (contentId: string) => {
   const blog = await client.getListDetail<Blog>({
     endpoint: "blogs",
     contentId,
   });
   return blog;
-};
+});

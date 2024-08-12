@@ -1,72 +1,61 @@
-import { FC } from "react";
-import Script from "next/script";
+"use client";
+
+import { FC, useEffect, useRef } from "react";
 import parse, {
   domToReact,
   Element,
   attributesToProps,
+  HTMLReactParserOptions,
+  DOMNode,
 } from "html-react-parser";
 import Image from "next/image";
-import { JSDOM } from "jsdom";
+import DOMPurify from "isomorphic-dompurify";
+import { isValidElement, ReactNode } from "react";
 
 interface BlogContentProps {
   content: string;
 }
 
-const optimizeImages = (htmlContent: string): string => {
-  const dom = new JSDOM(htmlContent);
-  const document = dom.window.document;
-
-  const images = document.getElementsByTagName("img");
-
-  Array.from(images).forEach((img) => {
-    const src = img.getAttribute("src");
-    const alt = img.getAttribute("alt") || "";
-    const width = img.getAttribute("width");
-    const height = img.getAttribute("height");
-
-    if (src) {
-      const tailwindClasses = [
-        "max-w-full",
-        "max-h-[70vh]",
-        "w-auto",
-        "h-auto",
-        "rounded-3xl",
-        "shadow-2xl",
-        "object-contain",
-        "object-center",
-      ].join(" ");
-
-      const optimizedImageTag = `
-        <img
-          src="${src}?auto=format,compress&fit=max"
-          alt="${alt}"
-          class="${tailwindClasses}"
-          ${width ? `width="${width}"` : ""}
-          ${height ? `height="${height}"` : ""}
-          loading="lazy"
-        />`;
-
-      img.outerHTML = optimizedImageTag;
-    }
+const sanitizeAndOptimizeContent = (htmlContent: string): string => {
+  return DOMPurify.sanitize(htmlContent, {
+    ADD_TAGS: ["iframe", "script"],
+    ADD_ATTR: [
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "scrolling",
+      "style",
+      "src",
+      "class",
+    ],
+    FORBID_TAGS: [],
+    // ALLOW_SCRIPT_CONTENT: trueを削除
   });
-
-  return document.body.innerHTML;
 };
 
 const BlogContent: FC<BlogContentProps> = ({ content }) => {
-  const optimizedContent = optimizeImages(content);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const sanitizedContent = sanitizeAndOptimizeContent(content);
 
-  const parsedContent = parse(optimizedContent, {
+  useEffect(() => {
+    if (contentRef.current) {
+      const scripts = contentRef.current.getElementsByTagName("script");
+      Array.from(scripts).forEach((script) => {
+        const newScript = document.createElement("script");
+        Array.from(script.attributes).forEach((attr) =>
+          newScript.setAttribute(attr.name, attr.value)
+        );
+        newScript.appendChild(document.createTextNode(script.innerHTML));
+        script.parentNode?.replaceChild(newScript, script);
+      });
+    }
+  }, [sanitizedContent]);
+
+  const options: HTMLReactParserOptions = {
     replace: (domNode) => {
       if (domNode instanceof Element) {
-        if (domNode.name === "iframe") {
-          const { src, ...props } = domNode.attribs;
-          return (
-            <>
-              <iframe {...props} />
-              <Script src={src} />
-            </>
-          );
+        if (domNode.name === "iframe" || domNode.name === "script") {
+          return domNode;
         }
         if (domNode.name === "img") {
           const { src, alt, width, height, ...rest } = domNode.attribs;
@@ -74,17 +63,35 @@ const BlogContent: FC<BlogContentProps> = ({ content }) => {
             <Image
               src={src}
               alt={alt || ""}
-              width={width ? parseInt(width, 10) : undefined}
-              height={height ? parseInt(height, 10) : undefined}
+              width={width ? parseInt(width, 10) : 800}
+              height={height ? parseInt(height, 10) : 600}
               {...attributesToProps(rest)}
             />
           );
         }
       }
     },
-  });
+  };
 
-  return <div>{parsedContent}</div>;
+  const parsedContent = parse(sanitizedContent, options);
+
+  const renderContent = (): ReactNode => {
+    if (isValidElement(parsedContent)) {
+      return parsedContent;
+    } else if (Array.isArray(parsedContent)) {
+      return domToReact(parsedContent as unknown as DOMNode[]);
+    } else {
+      return parsedContent as ReactNode;
+    }
+  };
+
+  return (
+    <div
+      className="blog-content"
+      ref={contentRef}
+      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+    />
+  );
 };
 
 export default BlogContent;
