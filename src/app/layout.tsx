@@ -15,8 +15,16 @@ const zenMaruGothic = Zen_Maru_Gothic({
 export const metadata: Metadata = {
   title: "FUNBARE*ねっと",
   description: "cigareのブログです",
+  icons: {
+    icon: [
+      {
+        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='28'%3E🍣%3C/text%3E%3C/svg%3E",
+        sizes: "any",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
-
 export default function RootLayout({
   children,
 }: {
